@@ -57,7 +57,8 @@ function App() {
     setProposals(items)
 
     // Fetch quorum
-    setQuorum(await dao.quorum())
+    const quorum = await dao.quorum()
+    setQuorum(ethers.utils.formatUnits(quorum, 18))
 
     setIsLoading(false)
   }
@@ -72,7 +73,7 @@ function App() {
     <Container>
       <Navigation account={account} />
 
-      <h1 className='my-4 text-center'>Welcome to our DAO!</h1>
+      <h1 className='my-4 text-center'>Welcome to SnarfDAO!</h1>
 
       {isLoading ? (
         <Loading />
@@ -87,7 +88,7 @@ function App() {
           <hr/>
 
           <p className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</p>
-          <p className='text-center'><strong>Quorum:</strong> 50%+ </p>
+          <p className='text-center'><strong>Quorum:</strong> {quorum} </p>
           <hr/>
 
           <Proposals

@@ -1,8 +1,11 @@
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
-import { ethers } from 'ethers'
+import { ethers } from 'ethers';
+import { useState } from 'react';
 
 const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
+  const [signer] = useState(provider.getSigner().getAddress())
+
   const voteHandler = async (id) => {
     try {
       const signer = await provider.getSigner()
@@ -53,7 +56,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{proposal.votes.toString()}</td>
             <td>
-              {!proposal.finalized && (
+              {!proposal.finalized && !proposal.votes[signer][proposal.id] && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
@@ -64,7 +67,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
               )}
             </td>
             <td>
-              {!proposal.finalized && proposal.votes > quorum && (
+              {!proposal.finalized && proposal.votes > quorum && !proposal.votes[signer][proposal.id] && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
