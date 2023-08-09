@@ -20,7 +20,7 @@ contract DAO {
         address payable recipient;
         uint256 votes;
         bool finalized;
-    }   
+    }
 
 
 
@@ -60,7 +60,7 @@ contract DAO {
 
     function createProposal(
         string memory _name,
-        string memory _description, 
+        string memory _description,
         uint256 _amount,
         address payable _recipient
     ) external onlyInvestor {
