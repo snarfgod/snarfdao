@@ -114,6 +114,12 @@ describe('DAO', () => {
         it('emits a correct vote event', async () => {
             expect(transaction).to.emit(dao, 'Vote').withArgs(1, tokens(200000), investor1.address)
         })
+        it('downvotes', async () => {
+          transaction = await dao.connect(investor2).downVote(1)
+          result = await transaction.wait()
+          const proposal = await dao.proposals(1)
+          expect(proposal.votes).to.equal(tokens(0))
+        })
 
     })
     describe('Failure', () => {
