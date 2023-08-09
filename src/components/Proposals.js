@@ -1,15 +1,25 @@
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import { ethers } from 'ethers';
-import { useState } from 'react';
+
 
 const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
-  const [signer] = useState(provider.getSigner().getAddress())
 
   const voteHandler = async (id) => {
     try {
       const signer = await provider.getSigner()
       const transaction = await dao.connect(signer).vote(id)
+      await transaction.wait()
+    } catch {
+      window.alert('User rejected or transaction reverted')
+    }
+
+    setIsLoading(true)
+  }
+  const downVoteHandler = async (id) => {
+    try {
+      const signer = await provider.getSigner()
+      const transaction = await dao.connect(signer).downVote(id)
       await transaction.wait()
     } catch {
       window.alert('User rejected or transaction reverted')
@@ -56,18 +66,27 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{proposal.votes.toString()}</td>
             <td>
-              {!proposal.finalized && !proposal.votes[signer][proposal.id] && (
+              {!proposal.finalized && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
                   onClick={() => voteHandler(proposal.id)}
                 >
-                  Vote
+                  Vote For
+                </Button>
+              )}
+              {!proposal.finalized && (
+                <Button
+                  variant="primary"
+                  style={{ width: '100%' , marginTop: '10px'}}
+                  onClick={() => downVoteHandler(proposal.id)}
+                >
+                  Vote Against
                 </Button>
               )}
             </td>
             <td>
-              {!proposal.finalized && proposal.votes > quorum && !proposal.votes[signer][proposal.id] && (
+              {!proposal.finalized && proposal.votes > quorum && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
