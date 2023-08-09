@@ -1,13 +1,15 @@
-# Sample Hardhat Project
+# SnarfDAO
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+SnarfDAO is a DAO that allows holders of SNARF to create and vote on proposals to send ETH from the DAO Treasury to a recipient address.
 
-Try running some of the following tasks:
+## Starting the project on localhost
 
-```shell
-npx hardhat help
-npx hardhat test
-GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.js
-```
+```npm install ```
+```npx hardhat node```
+```npx hardhat run scripts/deploy.js --network localhost```
+```npx hardhat run scripts/seed.js --network localhost```
+```npm run start```
+
+## Creator
+
+- [@snarfgod](https://www.github.com/snarfgod)
