@@ -112,14 +112,33 @@ describe('DAO', () => {
             const proposal = await dao.proposals(1)
             expect(proposal.votes).to.equal(tokens(200000))
         })
+        it('updates upvote and downvote mappings', async() => {
+          const upVoted = await dao.upVoted(investor1.address, 1)
+          const transaction = await dao.connect(investor2).downVote(1)
+          await transaction.wait()
+          const downVoted = await dao.downVoted(investor2.address, 1)
+          expect(upVoted).to.equal(true)
+          expect(downVoted).to.equal(true)
+        })
         it('emits a correct vote event', async () => {
             expect(transaction).to.emit(dao, 'Vote').withArgs(1, tokens(200000), investor1.address)
         })
         it('downvotes', async () => {
           transaction = await dao.connect(investor2).downVote(1)
-          result = await transaction.wait()
+          await transaction.wait()
           const proposal = await dao.proposals(1)
-          expect(proposal.votes).to.equal(tokens(0))
+          expect(proposal.votes).to.equal(tokens(400000))
+          expect(await dao.downVoted(investor2.address, 1)).to.equal(true)
+        })
+        it('updates vote count after multiple votes', async() => {
+          const proposal = await dao.proposals(1)
+          expect(proposal.votes).to.equal(tokens(200000))
+          transaction = await dao.connect(investor2).vote(1)
+          await transaction.wait()
+          expect(proposal.votes).to.equal(tokens(400000))
+          transaction = await dao.connect(investor3).downVote(1)
+          await transaction.wait()
+          expect(proposal.votes).to.equal(tokens(600000))
         })
         it('emits a correct vote event upon downvote', async () => {
           transaction = await dao.connect(investor2).downVote(1)
@@ -130,12 +149,13 @@ describe('DAO', () => {
     })
     describe('Failure', () => {
         it('rejects voting from non-investor', async () => {
-            await expect(dao.connect(user).vote(1)).to.be.reverted
+          await expect(dao.connect(user).vote(1)).to.be.reverted
         })
         it('rejects double voting', async () => {
-            transaction = await dao.connect(investor1).vote(1)
-            await transaction.wait()
-            await expect(dao.connect(investor1).vote(1)).to.be.reverted
+          transaction = await dao.connect(investor1).vote(1)
+          await transaction.wait()
+          await expect(dao.connect(investor1).vote(1)).to.be.reverted
+          await expect(dao.connect(investor1).downVote(1)).to.be.reverted
         })
     })
   })

@@ -89,9 +89,17 @@ async function main() {
     transaction = await dao.connect(investor2).vote(4)
     await transaction.wait()
 
-    // Vote 2
-    transaction = await dao.connect(investor3).vote(4)
+    let proposal = await dao.proposals(4)    
+    
+    console.log(proposal.votes)
+
+    // DownVote 1
+    transaction = await dao.connect(investor3).downVote(4)
     await transaction.wait()
+
+    //check vote count
+    proposal = await dao.proposals(4)    
+    console.log(proposal.votes)
 
     console.log(`Finished.\n`)
 }

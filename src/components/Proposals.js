@@ -16,6 +16,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
 
     setIsLoading(true)
   }
+  
   const downVoteHandler = async (id) => {
     try {
       const signer = await provider.getSigner()
@@ -50,7 +51,8 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
           <th>Recipient Address</th>
           <th>Amount</th>
           <th>Status</th>
-          <th>Total Votes</th>
+          <th>Total Votes Cast</th>
+          <th>Ratio For/Against</th>
           <th>Cast Vote</th>
           <th>Finalize</th>
         </tr>
@@ -64,7 +66,8 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.recipient}</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
-            <td>{proposal.votes.toString()}</td>
+            <td>{ethers.utils.formatUnits(proposal.votes, 18)}</td>
+            <td>{ethers.utils.formatUnits(proposal.upVotes, 18)}/{ethers.utils.formatUnits(proposal.downVotes, 18)}</td>
             <td>
               {!proposal.finalized && (
                 <Button
