@@ -97,6 +97,7 @@ function App() {
             dao={dao}
             proposals={proposals}
             quorum={quorum}
+            account={account}
             setIsLoading={setIsLoading}
           />
         </>

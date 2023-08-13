@@ -114,9 +114,14 @@ describe('DAO', () => {
         })
         it('updates upvote and downvote mappings', async() => {
           const upVoted = await dao.upVoted(investor1.address, 1)
+
           const transaction = await dao.connect(investor2).downVote(1)
           await transaction.wait()
+
           const downVoted = await dao.downVoted(investor2.address, 1)
+          const voted = await dao.voted(investor2.address, 1)
+          expect(voted).to.equal(true)
+
           expect(upVoted).to.equal(true)
           expect(downVoted).to.equal(true)
         })

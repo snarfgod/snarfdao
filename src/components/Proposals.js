@@ -1,9 +1,34 @@
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import { ethers } from 'ethers';
+import { useState, useEffect } from 'react';
 
 
-const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
+const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) => {
+
+  const [recipientBalances, setRecipientBalances] = useState({});
+
+  useEffect(() => {
+    async function fetchRecipientBalances() {
+      const balances = {};
+      for (const proposal of proposals) {
+        const balance = await getFormattedRecipientBalance(proposal.recipient);
+        balances[proposal.recipient] = balance;
+      }
+      setRecipientBalances(balances);
+    }
+    fetchRecipientBalances();
+  }, [proposals]);
+
+  const getFormattedRecipientBalance = async (recipientAddress) => {
+    try {
+      const balance = await provider.getBalance(recipientAddress);
+      return ethers.utils.formatUnits(balance, "ether") + " ETH";
+    } catch (error) {
+      console.error('Error fetching recipient balance:', error);
+      return 'N/A'; // Return a default value in case of error
+    }
+  };
 
   const voteHandler = async (id) => {
     try {
@@ -48,7 +73,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
           <th>#</th>
           <th>Name</th>
           <th>Description</th>
-          <th>Recipient Address</th>
+          <th>Recipient Address & Balance</th>
           <th>Amount</th>
           <th>Status</th>
           <th>Total Votes Cast</th>
@@ -63,13 +88,13 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.id.toString()}</td>
             <td>{proposal.name}</td>
             <td>{proposal.description}</td>
-            <td>{proposal.recipient}</td>
+            <td>{proposal.recipient + `\n` + recipientBalances[proposal.recipient]}</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{ethers.utils.formatUnits(proposal.votes, 18)}</td>
             <td>{ethers.utils.formatUnits(proposal.upVotes, 18)}/{ethers.utils.formatUnits(proposal.downVotes, 18)}</td>
             <td>
-              {!proposal.finalized && (
+              {!proposal.finalized && !dao.voted(account, proposal.id) && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
@@ -78,7 +103,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
                   Vote For
                 </Button>
               )}
-              {!proposal.finalized && (
+              {!proposal.finalized && !dao.voted(account, proposal.id) && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' , marginTop: '10px'}}
@@ -89,7 +114,7 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
               )}
             </td>
             <td>
-              {!proposal.finalized && proposal.votes > quorum && (
+              {!proposal.finalized && proposal.upVotes > quorum && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}

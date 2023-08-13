@@ -90,16 +90,28 @@ async function main() {
     await transaction.wait()
 
     let proposal = await dao.proposals(4)    
-    
     console.log(proposal.votes)
 
-    // DownVote 1
-    transaction = await dao.connect(investor3).downVote(4)
+    // Vote 2
+    transaction = await dao.connect(investor3).vote(4)
     await transaction.wait()
 
     //check vote count
     proposal = await dao.proposals(4)    
     console.log(proposal.votes)
+
+    //log the values of voted for investor1 for each proposal
+    let didVote = await dao.voted(investor1.address, 1)
+    console.log(didVote + "1st proposal")
+
+    didVote = await dao.voted(investor1.address, 2)
+    console.log(didVote + "2nd proposal")
+
+    didVote = await dao.voted(investor1.address, 3)
+    console.log(didVote + "3rd proposal")
+
+    didVote = await dao.voted(investor1.address, 4)
+    console.log(didVote + "4th proposal")
 
     console.log(`Finished.\n`)
 }
