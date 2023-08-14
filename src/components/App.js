@@ -20,7 +20,7 @@ function App() {
   const [treasuryBalance, setTreasuryBalance] = useState(0)
 
   const [account, setAccount] = useState(null)
-
+  
   const [proposals, setProposals] = useState(null)
   const [quorum, setQuorum] = useState(null)
 

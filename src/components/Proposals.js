@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) => {
 
   const [recipientBalances, setRecipientBalances] = useState({});
+  const [votedProposals, setVotedProposals] = useState([]);
 
   useEffect(() => {
     async function fetchRecipientBalances() {
@@ -19,6 +20,26 @@ const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) 
     }
     fetchRecipientBalances();
   }, [proposals]);
+
+  useEffect(() => {
+    fetchVotedProposals();
+  }, [account, dao, proposals]);
+  
+  
+
+  const fetchVotedProposals = async () => {
+    try {
+      const voted = [];
+      for (const proposal of proposals) {
+        if (await dao.voted(account, proposal.id)) {
+          voted.push(proposal.id);
+        }
+      }
+      setVotedProposals(voted);
+    } catch (error) {
+      console.error('Error fetching voted proposals:', error);
+    }
+  };  
 
   const getFormattedRecipientBalance = async (recipientAddress) => {
     try {
@@ -94,7 +115,7 @@ const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) 
             <td>{ethers.utils.formatUnits(proposal.votes, 18)}</td>
             <td>{ethers.utils.formatUnits(proposal.upVotes, 18)}/{ethers.utils.formatUnits(proposal.downVotes, 18)}</td>
             <td>
-              {!proposal.finalized && !dao.voted(account, proposal.id) && (
+              {!proposal.finalized && !votedProposals.includes(proposal.id) && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' }}
@@ -103,7 +124,7 @@ const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) 
                   Vote For
                 </Button>
               )}
-              {!proposal.finalized && !dao.voted(account, proposal.id) && (
+              {!proposal.finalized && !votedProposals.includes(proposal.id) && (
                 <Button
                   variant="primary"
                   style={{ width: '100%' , marginTop: '10px'}}
