@@ -136,13 +136,11 @@ describe('DAO', () => {
           expect(await dao.downVoted(investor2.address, 1)).to.equal(true)
         })
         it('updates vote count after multiple votes', async() => {
-          const proposal = await dao.proposals(1)
-          expect(proposal.votes).to.equal(tokens(200000))
           transaction = await dao.connect(investor2).vote(1)
           await transaction.wait()
-          expect(proposal.votes).to.equal(tokens(400000))
           transaction = await dao.connect(investor3).downVote(1)
           await transaction.wait()
+          const proposal = await dao.proposals(1)
           expect(proposal.votes).to.equal(tokens(600000))
         })
         it('emits a correct vote event upon downvote', async () => {
