@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
+
 const tokens = (n) => {
   return ethers.utils.parseUnits(n.toString(), 'ether')
 }
@@ -9,7 +10,7 @@ const ether = tokens
 
 describe('DAO', () => {
 
-    let token, dao, accounts, deployer, funder, investor1, investor2, investor3, investor4, investor5, recipient, user
+    let usdc, token, dao, accounts, deployer, funder, investor1, investor2, investor3, investor4, investor5, recipient, user, proposalAmount
 
   beforeEach(async () => {
     accounts = await ethers.getSigners()
@@ -22,6 +23,7 @@ describe('DAO', () => {
     investor5 = accounts[6]
     recipient = accounts[7]
     user = accounts[8]
+    proposalAmount = tokens(100, 6)
 
     const Token = await ethers.getContractFactory('Token')
     token = await Token.deploy('Snarfcoin', 'SNARF', '1000000')
@@ -41,14 +43,18 @@ describe('DAO', () => {
     transaction = await token.connect(deployer).transfer(investor5.address, tokens(200000))
     await transaction.wait()
 
-    const DAO = await ethers.getContractFactory('DAO')
-    dao = await DAO.deploy(token.address, '500000000000000000000001')
+   // Create mock USDC token using the custom MockERC20 contract
+    const ERC20Factory = await ethers.getContractFactory('MockERC20');
+    usdc = await ERC20Factory.deploy('USDC Stablecoin', 'USDC', 6, tokens(10000));
+    await usdc.deployed();
 
-    //Funding the treasury for governance
-    await funder.sendTransaction({
-        to: dao.address,
-        value: ether(100)
-    })
+    const DAO = await ethers.getContractFactory('DAO')
+    dao = await DAO.deploy(token.address, usdc.address, '500000000000000000000001')
+    await dao.deployed()
+
+     // Fund the DAO with 1000 USDC
+     transaction = await usdc.connect(deployer).transfer(dao.address, tokens(10000, 6));
+     await transaction.wait();
     })
 
   describe('Deployment', () => {
@@ -59,16 +65,19 @@ describe('DAO', () => {
     it('returns the quorum', async () => {
         expect(await dao.quorum()).to.equal('500000000000000000000001')
     })
-    it('sends ether to DAO treasury', async () => {
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(ether(100))
+    it('returns the usdc address', async () => {
+        expect(await dao.usdc()).to.equal(usdc.address)
     })
+    it('sends usdc to DAO treasury', async () => {
+      expect(await usdc.balanceOf(dao.address)).to.equal(tokens(10000, 6)); // Use balanceOf
+    });
   })
 
   describe('Proposal creation', () => {
     let transaction, result
     describe('Success', () => {
         beforeEach(async () => {
-            transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', ether(100), recipient.address)
+            transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', proposalAmount, recipient.address)
             result = await transaction.wait()
         })
         it('updates proposal count', async () => {
@@ -79,19 +88,19 @@ describe('DAO', () => {
             expect(proposal.id).to.equal(1)
             expect(proposal.name).to.equal('Proposal 1')
             expect(proposal.description).to.equal('description')
-            expect(proposal.amount).to.equal(ether(100))
+            expect(proposal.amount).to.equal(proposalAmount)
             expect(proposal.recipient).to.equal(recipient.address)
         })
         it('emits a ProposalCreated event', async () => {
-            expect(transaction).to.emit(dao, 'Propose').withArgs(1, ether(100), recipient.address, investor1.address)
+            expect(transaction).to.emit(dao, 'Propose').withArgs(1, proposalAmount, recipient.address, investor1.address)
         })
     })
     describe('Failure', () => {
         it('rejects invalid amount', async () => {
-            await expect(dao.connect(investor1).createProposal('Proposal 1', 'description', ether(1000), recipient.address)).to.be.reverted
+            await expect(dao.connect(investor1).createProposal('Proposal 1', 'description', tokens(1000000000, 6), recipient.address)).to.be.reverted
         })
         it('rejects request to create proposal from non-investor', async () => {
-            await expect(dao.connect(user).createProposal('Proposal 1', 'description', ether(100), recipient.address)).to.be.reverted
+            await expect(dao.connect(user).createProposal('Proposal 1', 'description', proposalAmount, recipient.address)).to.be.reverted
         })
     })
 
@@ -100,7 +109,7 @@ describe('DAO', () => {
     let transaction, result
 
     beforeEach(async () => {
-        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', ether(100), recipient.address)
+        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', proposalAmount, recipient.address)
         result = await transaction.wait()
     })
     describe('Success', () => {
@@ -169,7 +178,7 @@ describe('DAO', () => {
 
       beforeEach(async () => {
         // Create proposal
-        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', ether(100), recipient.address)
+        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', proposalAmount, recipient.address)
         result = await transaction.wait()
 
         // Vote
@@ -188,7 +197,7 @@ describe('DAO', () => {
       })
 
       it('transfers funds to recipient', async () => {
-        expect(await ethers.provider.getBalance(recipient.address)).to.equal(tokens(10100))
+        expect(await usdc.balanceOf(recipient.address)).to.equal(proposalAmount)
       })
 
       it('it updates the proposal to finalized', async () => {
@@ -207,7 +216,7 @@ describe('DAO', () => {
 
       beforeEach(async () => {
         // Create proposal
-        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', ether(100), recipient.address)
+        transaction = await dao.connect(investor1).createProposal('Proposal 1', 'description', proposalAmount, recipient.address)
         result = await transaction.wait()
 
         // Vote

@@ -5,12 +5,14 @@ pragma solidity ^0.8.18;
 import 'hardhat/console.sol';
 
 import './Token.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DAO {
 
     address public owner;
     Token public token;
     uint256 public quorum;
+    IERC20 public usdc;
 
     struct Proposal {
         uint256 id;
@@ -23,8 +25,6 @@ contract DAO {
         uint256 downVotes;
         bool finalized;
     }
-
-
 
     uint256 public proposalCount;
     mapping(uint256 => Proposal) public proposals;
@@ -53,9 +53,10 @@ contract DAO {
         _;
     }
 
-    constructor(Token _token, uint256 _quorum) {
+    constructor(Token _token, IERC20 _usdc, uint256 _quorum) {
         owner = msg.sender;
         token = _token;
+        usdc = _usdc; 
         quorum = _quorum;
     }
 
@@ -68,7 +69,7 @@ contract DAO {
         uint256 _amount,
         address payable _recipient
     ) external onlyInvestor {
-        require(address(this).balance >= _amount, 'not enough funds');
+        require(usdc.balanceOf(address(this)) >= _amount, 'not enough funds');
         proposalCount++;
         proposals[proposalCount] = Proposal(proposalCount, _name, _description, _amount, _recipient, 0, 0, 0, false);
         emit Propose(proposalCount, _amount, _recipient, msg.sender);
@@ -108,10 +109,9 @@ contract DAO {
         Proposal storage proposal = proposals[_id];
         require(!proposal.finalized, 'proposal already finalized');
         require(proposal.upVotes >= quorum, 'cannot finalize proposal, not enough votes for');
-        require(address(this).balance >= proposal.amount, 'cannot finalize proposal, not enough funds');
+        require(usdc.balanceOf(address(this)) >= proposal.amount, 'cannot finalize proposal, not enough funds');
         proposal.finalized = true;
-        (bool sent, ) = proposal.recipient.call{value: proposal.amount}('');
-        require(sent, 'failed to send ether');
+        require(usdc.transfer(proposal.recipient, proposal.amount), 'transfer failed');
         emit Finalize(_id);
         }
 
