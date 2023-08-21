@@ -7,8 +7,8 @@
 const hre = require("hardhat");
 const config = require('../src/config.json')
 
-const tokens = (n) => {
-  return ethers.utils.parseUnits(n.toString(), 'ether')
+const tokens = (n, decimals = 18) => {
+  return ethers.utils.parseUnits(n.toString(), decimals)
 }
 
 const ether = tokens
@@ -48,6 +48,10 @@ async function main() {
   transaction = await token.transfer(investor4.address, tokens(200000))
   await transaction.wait()
 
+  // Fetch USDC token
+  const usdc = await ethers.getContractAt('MockERC20', config[chainId].usdc.address)
+  console.log(`USDC fetched: ${usdc.address}\n`)
+
   console.log(`Fetching dao...\n`)
 
   // Fetch deployed dao
@@ -55,13 +59,13 @@ async function main() {
   console.log(`DAO fetched: ${dao.address}\n`)
 
   // Funder sends Ether to DAO treasury
-  transaction = await funder.sendTransaction({ to: dao.address, value: ether(1000) }) // 1,000 Ether
+  transaction = await usdc.connect(funder).transfer(dao.address, tokens(10000, 6))
   await transaction.wait()
-  console.log(`Sent funds to dao treasury...\n`)
+  console.log(`Sent funds (${tokens(10000, 6)}) to dao treasury...\n`)
 
   for (var i = 0; i < 3; i++) {
       // Create Proposal
-      transaction = await dao.connect(investor1).createProposal(`Proposal ${i + 1}`, `Description ${i + 1}`, ether(100), recipient.address)
+      transaction = await dao.connect(investor1).createProposal(`Proposal ${i + 1}`, `Description ${i + 1}`, tokens(100, 6), recipient.address)
       await transaction.wait()
 
       // Vote 1
@@ -86,7 +90,7 @@ async function main() {
     console.log(`Creating one more proposal...\n`)
 
     // Create one more proposal
-    transaction = await dao.connect(investor1).createProposal(`Proposal 4`, `Description 4`, ether(100), recipient.address)
+    transaction = await dao.connect(investor1).createProposal(`Proposal 4`, `Description 4`, tokens(100, 6), recipient.address)
     await transaction.wait()
 
     // Vote 1

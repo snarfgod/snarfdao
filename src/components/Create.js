@@ -17,7 +17,7 @@ const Create = ({ provider, dao, setIsLoading }) => {
 
     try {
       const signer = await provider.getSigner()
-      const formattedAmount = ethers.utils.parseUnits(amount.toString(), 'ether')
+      const formattedAmount = ethers.utils.parseUnits(amount.toString(), 6)
 
       const transaction = await dao.connect(signer).createProposal(name, description, formattedAmount, address)
       await transaction.wait()

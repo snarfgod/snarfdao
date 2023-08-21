@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { useState, useEffect } from 'react';
 
 
-const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) => {
+const Proposals = ({ provider, dao, usdc, proposals, quorum, account, setIsLoading }) => {
 
   const [recipientBalances, setRecipientBalances] = useState({});
   const [votedProposals, setVotedProposals] = useState([]);
@@ -43,8 +43,8 @@ const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) 
 
   const getFormattedRecipientBalance = async (recipientAddress) => {
     try {
-      const balance = await provider.getBalance(recipientAddress);
-      return ethers.utils.formatUnits(balance, "ether") + " ETH";
+      const balance = await usdc.balanceOf(recipientAddress);
+      return ethers.utils.formatUnits(balance, 6) + " USDC";
     } catch (error) {
       console.error('Error fetching recipient balance:', error);
       return 'N/A'; // Return a default value in case of error
@@ -110,7 +110,7 @@ const Proposals = ({ provider, dao, proposals, quorum, account, setIsLoading }) 
             <td>{proposal.name}</td>
             <td>{proposal.description}</td>
             <td>{proposal.recipient + `\n` + recipientBalances[proposal.recipient]}</td>
-            <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
+            <td>{ethers.utils.formatUnits(proposal.amount, 6)} USDC</td>
             <td>{proposal.finalized ? 'Approved' : 'In Progress'}</td>
             <td>{ethers.utils.formatUnits(proposal.votes, 18)}</td>
             <td>{ethers.utils.formatUnits(proposal.upVotes, 18)}/{ethers.utils.formatUnits(proposal.downVotes, 18)}</td>

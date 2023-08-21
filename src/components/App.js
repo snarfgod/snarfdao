@@ -10,6 +10,7 @@ import Loading from './Loading';
 
 // ABIs: Import your contract ABIs here
 import DAO_ABI from '../abis/DAO.json'
+import ERC20_ABI from '../abis/MockERC20.json'
 
 // Config: Import your network config here
 import config from '../config.json';
@@ -17,6 +18,7 @@ import config from '../config.json';
 function App() {
   const [provider, setProvider] = useState(null)
   const [dao, setDao] = useState(null)
+  const [usdc, setUSDC] = useState(null)
   const [treasuryBalance, setTreasuryBalance] = useState(0)
 
   const [account, setAccount] = useState(null)
@@ -34,10 +36,12 @@ function App() {
     // Initiate contracts
     const dao = new ethers.Contract(config[31337].dao.address, DAO_ABI, provider)
     setDao(dao)
+    const usdc = new ethers.Contract(config[31337].usdc.address, ERC20_ABI, provider)
+    setUSDC(usdc)
 
     // Fetch treasury balance
-    let treasuryBalance = await provider.getBalance(dao.address)
-    treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 18)
+    let treasuryBalance = await usdc.balanceOf(dao.address)
+    treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 6)
     setTreasuryBalance(treasuryBalance)
 
     // Fetch accounts
@@ -87,7 +91,7 @@ function App() {
 
           <hr/>
 
-          <p className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} ETH</p>
+          <p className='text-center'><strong>Treasury Balance:</strong> {treasuryBalance} USDC</p>
           <p className='text-center'><strong>Quorum:</strong> {quorum} </p>
           
           <hr/>
@@ -95,6 +99,7 @@ function App() {
           <Proposals
             provider={provider}
             dao={dao}
+            usdc={usdc}
             proposals={proposals}
             quorum={quorum}
             account={account}

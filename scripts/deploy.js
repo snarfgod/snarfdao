@@ -18,11 +18,20 @@ async function main() {
   await token.deployed()
   console.log(`Token deployed to: ${token.address}\n`)
 
+  // Deploy Mock USDC
+  const USDC = await hre.ethers.getContractFactory('MockERC20')
+  let usdc = await USDC.deploy('USDC Stablecoin', 'USDC', 6, '1000000000000')
+
+  await usdc.deployed()
+  console.log(`USDC deployed to: ${usdc.address}\n`)
+
   const DAO = await hre.ethers.getContractFactory('DAO')
-  let dao = await DAO.deploy(token.address, '500000000000000000000001')
+  let dao = await DAO.deploy(token.address, usdc.address, '500000000000000000000001')
 
   await dao.deployed()
   console.log(`DAO deployed to: ${dao.address}\n`)
+
+  
 }
 
 // We recommend this pattern to be able to use async/await everywhere
