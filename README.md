@@ -1,6 +1,6 @@
 # SnarfDAO
 
-SnarfDAO is a DAO that allows holders of SNARF to create and vote on proposals to send ETH from the DAO Treasury to a recipient address.
+SnarfDAO is a DAO that allows holders of SNARF to create and vote on proposals to send (mock)USDC from the DAO Treasury to a recipient address.
 
 ## Starting the project on localhost
 
